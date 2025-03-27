@@ -1,6 +1,6 @@
 /******************************************************************
  *
- *   YOUR NAME / SECTION NUMBER
+ *   Evan Bowser / 002
  *
  *   Note, additional comments provided throughout this source code
  *   is for educational purposes
@@ -245,13 +245,45 @@ public class CuckooHash<K, V> {
 	 */
 
  	public void put(K key, V value) {
+    int firstHash = hash1(key);
+    int secondHash = hash2(key);
 
-		// ADD YOUR CODE HERE - DO NOT FORGET TO ADD YOUR NAME AT TOP OF FILE.
-		// Also make sure you read this method's prologue above, it should help
-		// you. Especially the two HINTS in the prologue.
+    // If key-value already exists, do nothing
+    if (existsAt(firstHash, key, value) || existsAt(secondHash, key, value)) {
+        return;
+    }
 
-		return;
-	}
+    Bucket<K, V> newBucket = new Bucket<>(key, value);
+    int currentPosition = firstHash;
+    int attempts = 0;
+
+    while (attempts < CAPACITY) {
+        if (table[currentPosition] == null) {
+            table[currentPosition] = newBucket;
+            return;
+        }
+
+        // Swap and reassign the displaced bucket
+        Bucket<K, V> displacedBucket = table[currentPosition];
+        table[currentPosition] = newBucket;
+        newBucket = displacedBucket;
+
+        // Toggle between hash positions
+        currentPosition = (currentPosition == hash1(newBucket.getBucKey())) ? hash2(newBucket.getBucKey()) : hash1(newBucket.getBucKey());
+
+        attempts++;
+    }
+
+    // If no placement found, rehash and try again
+    rehash();
+    put(newBucket.getBucKey(), newBucket.getValue());
+}
+
+// Helper method to check if key-value pair exists
+private boolean existsAt(int position, K key, V value) {
+    return table[position] != null && table[position].getBucKey().equals(key) && table[position].getValue().equals(value);
+}
+
 
 
 	/**
@@ -353,4 +385,3 @@ public class CuckooHash<K, V> {
 	}
 
 }
-
